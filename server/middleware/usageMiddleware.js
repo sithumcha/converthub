@@ -29,25 +29,25 @@ const checkUsageLimit = async (req, res, next) => {
 
     // Tier limits
     const limits = {
-      free: { daily: 50, monthly: 500 },
-      pro: { daily: 100, monthly: 1000 }
+      free: { daily: 20, monthly: 600 },
+      pro: { daily: 100, monthly: 3000 }
     };
 
     const currentLimits = limits[user.tier] || limits.free;
 
     if (user.dailyConversions >= currentLimits.daily) {
       console.log(`🚫 User ${user._id} reached daily limit: ${user.dailyConversions}/${currentLimits.daily}`);
-      return res.status(403).json({ 
-        success: false, 
-        message: `Daily limit reached for ${user.tier} tier (${currentLimits.daily} conversions). Upgrade to PRO for higher limits.` 
+      return res.status(403).json({
+        success: false,
+        message: `Daily limit reached for ${user.tier} tier (${currentLimits.daily} conversions). Upgrade to PRO for higher limits.`
       });
     }
 
     if (user.monthlyConversions >= currentLimits.monthly) {
       console.log(`🚫 User ${user._id} reached monthly limit: ${user.monthlyConversions}/${currentLimits.monthly}`);
-      return res.status(403).json({ 
-        success: false, 
-        message: `Monthly limit reached for ${user.tier} tier (${currentLimits.monthly} conversions).` 
+      return res.status(403).json({
+        success: false,
+        message: `Monthly limit reached for ${user.tier} tier (${currentLimits.monthly} conversions).`
       });
     }
 
