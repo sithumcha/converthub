@@ -8,9 +8,19 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000, // warning limit එක 1MB දක්වා වැඩි කරන්න
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['react-hot-toast'],
+        manualChunks: (id) => {
+
+          if (id.includes('node_modules/react')) {
+            return 'vendor';
+          }
+
+          if (id.includes('node_modules/react-hot-toast')) {
+            return 'ui';
+          }
+
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
         }
       }
     }
