@@ -16,32 +16,11 @@ const paymentRoutes = require('./routes/paymentRoutes');
 
 const app = express();
 
-// ✅ Complete Helmet Configuration - Allow blob: URLs for downloads
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      useDefaults: false,
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "blob:"],
-        scriptSrcElem: ["'self'", "'unsafe-inline'", "blob:"],  // ✅ CRITICAL: Allow blob: in script-src-elem
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        styleSrcElem: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:", "blob:"],
-        connectSrc: ["'self'", "https://api.remove.bg", "https://*.upstash.io"],
-        fontSrc: ["'self'"],
-        objectSrc: ["'none'"],
-        mediaSrc: ["'self'"],
-        frameSrc: ["'none'"],
-        baseUri: ["'self'"],
-        formAction: ["'self'"],
-        frameAncestors: ["'none'"],
-      },
-    },
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
-  })
-);
+// ✅ Temporary: Disable CSP to allow blob URLs
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+}));
 
 app.use(morgan('dev'));
 
