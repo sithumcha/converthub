@@ -10,6 +10,30 @@ const api = axios.create({
   }
 });
 
+// ✅ Request interceptor - Add token to headers
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// ✅ Response interceptor - Handle 401 errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Auth Services
 export const authService = {
   login: (email, password) => api.post('/auth/login', { email, password }),
@@ -32,7 +56,7 @@ export const fileService = {
   },
   getHistory: () => api.get('/files/history'),
   getStatus: (id) => api.get(`/files/status/${id}`),
-  download: (id) => `${import.meta.env.VITE_API_URL}/files/download/${id}`,
+  download: (id) => `${API_URL}/files/download/${id}`,
   batchDownload: (conversionIds) => api.post('/files/batch-download', { conversionIds }),
 };
 
@@ -83,7 +107,7 @@ export const imageService = {
     if (options.quality) formData.append('quality', options.quality);
     if (options.width) formData.append('width', options.width);
     if (options.height) formData.append('height', options.height);
-    
+
     return api.post('/images/process', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });

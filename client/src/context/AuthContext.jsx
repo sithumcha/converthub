@@ -12,10 +12,17 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkUser = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await authService.getMe();
       setUser(res.data.user);
     } catch (err) {
+      localStorage.removeItem('token');
       setUser(null);
     } finally {
       setLoading(false);
@@ -24,12 +31,24 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const res = await authService.login(email, password);
+
+    // ✅ Save token to localStorage
+    if (res.data.token) {
+      localStorage.setItem('token', res.data.token);
+    }
+
     setUser(res.data.user);
     return res.data;
   };
 
   const register = async (username, email, password) => {
     const res = await authService.register(username, email, password);
+
+    // ✅ Save token to localStorage
+    if (res.data.token) {
+      localStorage.setItem('token', res.data.token);
+    }
+
     setUser(res.data.user);
     return res.data;
   };
@@ -37,7 +56,10 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await authService.logout();
+    } catch (err) {
+      console.error('Logout error:', err);
     } finally {
+      localStorage.removeItem('token');
       setUser(null);
     }
   };

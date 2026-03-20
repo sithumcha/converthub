@@ -19,6 +19,7 @@ const sendTokenResponse = (user, statusCode, res) => {
     .cookie('token', token, cookieOptions)
     .json({
       success: true,
+      token: token,  // ✅ Added for localStorage
       user: {
         id: user._id,
         username: user.username,
@@ -55,12 +56,12 @@ exports.register = async (req, res) => {
 
     res.status(201).json({
       success: true,
+      token: token,  // ✅ Added for localStorage
       user: {
         id: user._id,
         username: user.username,
         email: user.email
-      },
-      token
+      }
     });
   } catch (err) {
     console.error('Registration Error:', err);
