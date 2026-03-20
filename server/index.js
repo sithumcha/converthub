@@ -2,7 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-//const helmet = require('helmet');
 const queue = require('./config/queue');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
@@ -15,12 +14,6 @@ const imageRoutes = require('./routes/imageRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 
 const app = express();
-
-// ✅ Temporary: Disable CSP to allow blob URLs
-// app.use(helmet({
-//   contentSecurityPolicy: false,
-//   crossOriginResourcePolicy: { policy: "cross-origin" },
-// }));
 
 app.use(morgan('dev'));
 

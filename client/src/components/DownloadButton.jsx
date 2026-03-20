@@ -8,7 +8,7 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
     const handleDownload = async (e) => {
         if (e && e.preventDefault) e.preventDefault();
         if (e && e.stopPropagation) e.stopPropagation();
-        
+
         console.log('🔍 DownloadButton clicked');
         console.log('🔍 conversionId:', conversionId);
 
@@ -67,7 +67,7 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
             document.body.appendChild(link);
             link.click();
             link.remove();
-            
+
             setTimeout(() => {
                 window.URL.revokeObjectURL(downloadUrl);
             }, 100);
