@@ -5,7 +5,10 @@ import toast from 'react-hot-toast';
 const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '', children }) => {
     const [loading, setLoading] = useState(false);
 
-    const handleDownload = async () => {
+    const handleDownload = async (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        if (e && e.stopPropagation) e.stopPropagation();
+        
         console.log('🔍 DownloadButton clicked');
         console.log('🔍 conversionId:', conversionId);
 
@@ -25,8 +28,7 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
 
         setLoading(true);
         try {
-            // ✅ Hardcoded backend URL for testing
-            const API_BASE = 'https://converthub-api.onrender.com';
+            const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
             const url = `${API_BASE}/api/files/download/${conversionId}`;
             console.log('🔍 Download URL:', url);
 
@@ -50,11 +52,13 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
             }
 
             if (!response.ok) {
-                throw new Error(`Download failed: ${response.status}`);
+                const errorText = await response.text();
+                throw new Error(`Download failed: ${response.status} - ${errorText}`);
             }
 
             const blob = await response.blob();
             console.log('📦 Blob size:', blob.size, 'bytes');
+            console.log('📦 Blob type:', blob.type);
 
             const downloadUrl = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -63,7 +67,10 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
             document.body.appendChild(link);
             link.click();
             link.remove();
-            window.URL.revokeObjectURL(downloadUrl);
+            
+            setTimeout(() => {
+                window.URL.revokeObjectURL(downloadUrl);
+            }, 100);
 
             toast.success('Download started!');
             console.log('✅ Download completed');
@@ -77,6 +84,7 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
 
     return (
         <button
+            type="button"
             onClick={handleDownload}
             disabled={loading}
             className={`px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2 disabled:opacity-50 transition-all ${className}`}
