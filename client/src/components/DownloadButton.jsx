@@ -6,13 +6,11 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
     const [loading, setLoading] = useState(false);
 
     const handleDownload = async () => {
-        console.log('========================================');
         console.log('🔍 DownloadButton clicked');
         console.log('🔍 conversionId:', conversionId);
 
-        // Check token
         const token = localStorage.getItem('token');
-        console.log('🔍 Token exists:', token ? '✅ YES' : '❌ NO');
+        console.log('🔍 Token exists:', token ? 'YES' : 'NO');
 
         if (!token) {
             toast.error('Please login first');
@@ -27,8 +25,12 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
 
         setLoading(true);
         try {
-            // ✅ Direct fetch with correct headers (same as working console test)
-            const response = await fetch(`https://converthub-api.onrender.com/api/files/download/${conversionId}`, {
+            // ✅ Hardcoded backend URL for testing
+            const API_BASE = 'https://converthub-api.onrender.com';
+            const url = `${API_BASE}/api/files/download/${conversionId}`;
+            console.log('🔍 Download URL:', url);
+
+            const response = await fetch(url, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -40,7 +42,7 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
             console.log('📡 Response status:', response.status);
 
             if (response.status === 401) {
-                console.error('❌ 401 Unauthorized - Token invalid or expired');
+                console.error('❌ 401 Unauthorized');
                 localStorage.removeItem('token');
                 toast.error('Session expired. Please login again.');
                 window.location.href = '/login';
@@ -48,33 +50,29 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
             }
 
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error('❌ Response error:', errorText);
                 throw new Error(`Download failed: ${response.status}`);
             }
 
             const blob = await response.blob();
             console.log('📦 Blob size:', blob.size, 'bytes');
 
-            // Create download link
-            const url = window.URL.createObjectURL(blob);
+            const downloadUrl = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
-            link.href = url;
+            link.href = downloadUrl;
             link.setAttribute('download', filename);
             document.body.appendChild(link);
             link.click();
             link.remove();
-            window.URL.revokeObjectURL(url);
+            window.URL.revokeObjectURL(downloadUrl);
 
             toast.success('Download started!');
-            console.log('✅ Download completed successfully');
+            console.log('✅ Download completed');
         } catch (error) {
             console.error('❌ Download error:', error);
             toast.error(error.message || 'Download failed');
         } finally {
             setLoading(false);
         }
-        console.log('========================================');
     };
 
     return (
