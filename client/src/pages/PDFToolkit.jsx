@@ -2,14 +2,16 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import { pdfService, fileService } from '../services/api';
+import DownloadButton from '../components/DownloadButton';
 import { FilePlus, FileMinus, Send, Download, Loader2, CheckCircle2, AlertCircle, Trash2, LayoutGrid, List, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 
 const PDFToolkit = () => {
   const location = useLocation();
-  const [mode, setMode] = useState(location.state?.mode || 'merge'); // 'merge', 'split', 'compress', 'to-word', 'protect'
+  const [mode, setMode] = useState(location.state?.mode || 'merge');
   const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
-  
+
   useEffect(() => {
     if (location.state?.mode) {
       setMode(location.state.mode);
@@ -46,14 +48,14 @@ const PDFToolkit = () => {
 
   const pollStatus = async (id) => {
     let attempts = 0;
-    const maxAttempts = 30; // 30 seconds max
-    
+    const maxAttempts = 30;
+
     return new Promise((resolve, reject) => {
       const interval = setInterval(async () => {
         try {
           const res = await fileService.getStatus(id);
           const data = res.data.data;
-          
+
           if (data.status === 'completed') {
             clearInterval(interval);
             resolve(data);
@@ -61,7 +63,7 @@ const PDFToolkit = () => {
             clearInterval(interval);
             reject(new Error('Conversion failed on server'));
           }
-          
+
           attempts++;
           if (attempts >= maxAttempts) {
             clearInterval(interval);
@@ -76,7 +78,16 @@ const PDFToolkit = () => {
   };
 
   const handleAction = async () => {
-    if (files.length === 0) return;
+    if (files.length === 0) {
+      toast.error('Please select a file');
+      return;
+    }
+
+    if (mode === 'protect' && !password) {
+      toast.error('Please enter a password');
+      return;
+    }
+
     setLoading(true);
     setStatus('processing');
     setError('');
@@ -94,16 +105,18 @@ const PDFToolkit = () => {
       } else if (mode === 'protect') {
         res = await pdfService.protect(files[0], password);
       }
-      
+
       const conversionId = res.data.conversionId;
       if (!conversionId) throw new Error("No conversion ID received from server");
-      
+
       const finalResult = await pollStatus(conversionId);
-      setResult(finalResult);
+      setResult({ ...finalResult, conversionId });
       setStatus('completed');
+      toast.success('Processing completed!');
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Operation failed');
       setStatus('error');
+      toast.error(err.message || 'Operation failed');
     } finally {
       setLoading(false);
     }
@@ -131,9 +144,8 @@ const PDFToolkit = () => {
           <button
             key={m.id}
             onClick={() => { setMode(m.id); setFiles([]); setResult(null); setStatus('idle'); setPassword(''); }}
-            className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all ${
-              mode === m.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-white dark:bg-slate-900 dark:text-slate-300 hover:bg-slate-50'
-            }`}
+            className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all ${mode === m.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-white dark:bg-slate-900 dark:text-slate-300 hover:bg-slate-50'
+              }`}
           >
             {m.icon} {m.label}
           </button>
@@ -166,9 +178,8 @@ const PDFToolkit = () => {
 
           <div
             {...getRootProps()}
-            className={`glass border-2 border-dashed rounded-3xl p-12 text-center transition-all cursor-pointer h-full flex flex-col justify-center gap-4 ${
-              isDragActive ? 'border-indigo-500 bg-indigo-50/10' : 'border-slate-300 dark:border-slate-800 hover:border-indigo-400'
-            }`}
+            className={`glass border-2 border-dashed rounded-3xl p-12 text-center transition-all cursor-pointer h-full flex flex-col justify-center gap-4 ${isDragActive ? 'border-indigo-500 bg-indigo-50/10' : 'border-slate-300 dark:border-slate-800 hover:border-indigo-400'
+              }`}
           >
             <input {...getInputProps()} />
             <div className="bg-indigo-100 dark:bg-indigo-900/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-indigo-600 mb-2">
@@ -234,24 +245,24 @@ const PDFToolkit = () => {
                 </>
               ) : (
                 <>
-                  {mode === 'merge' ? 'Merge PDFs' : 
-                   mode === 'split' ? 'Split PDF' : 
-                   mode === 'compress' ? 'Compress PDF' : 
-                   mode === 'protect' ? 'Protect PDF' : 'Convert to Word'}
+                  {mode === 'merge' ? 'Merge PDFs' :
+                    mode === 'split' ? 'Split PDF' :
+                      mode === 'compress' ? 'Compress PDF' :
+                        mode === 'protect' ? 'Protect PDF' : 'Convert to Word'}
                   <Send size={18} />
                 </>
               )}
             </motion.button>
           )}
 
-          {status === 'completed' && (
+          {status === 'completed' && result && (
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
               className="mt-6 p-8 bg-green-50 dark:bg-green-900/10 rounded-[2.5rem] border border-green-100 dark:border-green-900/20 text-center shadow-xl shadow-green-500/5"
             >
-              <motion.div 
+              <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 400, damping: 15 }}
@@ -263,34 +274,35 @@ const PDFToolkit = () => {
               </motion.div>
               <h3 className="text-2xl font-black text-green-900 dark:text-green-400 mb-2">Success!</h3>
               <p className="text-green-700 dark:text-green-500/80 mb-6 font-medium">Your request has been processed.</p>
-              
+
+              {/* ✅ Use DownloadButton component instead of direct download link */}
               {mode !== 'split' ? (
-                <motion.a
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  href={fileService.download(result._id)}
-                  download
+                <DownloadButton
+                  conversionId={result.conversionId}
+                  filename={`${mode}_output.pdf`}
                   className="inline-flex items-center gap-3 bg-green-600 hover:bg-green-700 text-white px-10 py-4 rounded-2xl text-lg font-black shadow-lg shadow-green-600/20 transition-all"
-                >
-                  <Download size={24} /> Download Now
-                </motion.a>
+                />
               ) : (
                 <div className="space-y-3 text-left max-w-sm mx-auto">
                   <p className="text-sm dark:text-white font-bold opacity-70 uppercase tracking-widest pl-1">Generated Pages</p>
                   <div className="max-h-[200px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
                     {(Array.isArray(result.convertedFile) ? result.convertedFile : [result.convertedFile]).map((f, i) => (
-                      <motion.a
+                      <motion.div
                         key={f.filename || i}
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.3 + i * 0.05 }}
-                        href={fileService.download(result._id)}
-                        download
-                        className="flex items-center justify-between bg-white dark:bg-slate-800 p-3 rounded-xl border border-green-100 dark:border-green-900/30 text-sm text-green-700 dark:text-green-400 hover:border-green-500 transition-all group"
+                        className="flex items-center justify-between bg-white dark:bg-slate-800 p-3 rounded-xl border border-green-100 dark:border-green-900/30 text-sm text-green-700 dark:text-green-400"
                       >
                         <span className="truncate flex-1">{f.filename}</span>
-                        <Download size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </motion.a>
+                        <DownloadButton
+                          conversionId={result.conversionId}
+                          filename={f.filename || `page_${i + 1}.pdf`}
+                          className="px-3 py-1.5 text-sm bg-transparent text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30"
+                        >
+                          <Download size={14} className="ml-1" />
+                        </DownloadButton>
+                      </motion.div>
                     ))}
                   </div>
                 </div>

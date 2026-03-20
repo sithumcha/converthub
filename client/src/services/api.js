@@ -58,6 +58,28 @@ export const fileService = {
   getStatus: (id) => api.get(`/files/status/${id}`),
   download: (id) => `${API_URL}/files/download/${id}`,
   batchDownload: (conversionIds) => api.post('/files/batch-download', { conversionIds }),
+
+  // ✅ Add this downloadFile function
+  downloadFile: async (conversionId, filename = 'download.pdf') => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No token found. Please login again.');
+    }
+
+    const response = await fetch(`${API_URL}/files/download/${conversionId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Download failed');
+    }
+
+    return response.blob();
+  }
 };
 
 export const pdfService = {
