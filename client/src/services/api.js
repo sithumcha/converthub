@@ -59,26 +59,55 @@ export const fileService = {
   download: (id) => `${API_URL}/files/download/${id}`,
   batchDownload: (conversionIds) => api.post('/files/batch-download', { conversionIds }),
 
-  // ✅ Add this downloadFile function
+  // ✅ Fixed downloadFile function with credentials: 'include'
   downloadFile: async (conversionId, filename = 'download.pdf') => {
+    console.log('🔍 Download requested for:', conversionId);
+
     const token = localStorage.getItem('token');
+    console.log('🔍 Token exists:', !!token);
+
     if (!token) {
+      console.error('❌ No token found');
       throw new Error('No token found. Please login again.');
     }
 
-    const response = await fetch(`${API_URL}/files/download/${conversionId}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
+    const API_URL = import.meta.env.VITE_API_URL;
+    const url = `${API_URL}/files/download/${conversionId}`;
+    console.log('🔍 Download URL:', url);
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'  // ✅ Important: Send cookies with request
+      });
+
+      console.log('🔍 Response status:', response.status);
+
+      if (response.status === 401) {
+        console.error('❌ 401 Unauthorized - Token invalid');
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+        throw new Error('Session expired. Please login again.');
       }
-    });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Download failed');
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Response error:', errorText);
+        throw new Error(`Download failed: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      console.log('✅ Download successful, blob size:', blob.size);
+      return blob;
+
+    } catch (error) {
+      console.error('❌ Download error:', error);
+      throw error;
     }
-
-    return response.blob();
   }
 };
 
