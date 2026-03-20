@@ -16,14 +16,17 @@ const paymentRoutes = require('./routes/paymentRoutes');
 
 const app = express();
 
-// ✅ Helmet Configuration - Allow blob: URLs for downloads
+// ✅ Complete Helmet Configuration - Allow blob: URLs for downloads
 app.use(
   helmet({
     contentSecurityPolicy: {
+      useDefaults: false,
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'", "'unsafe-inline'", "blob:"],
+        scriptSrcElem: ["'self'", "'unsafe-inline'", "blob:"],  // ✅ CRITICAL: Allow blob: in script-src-elem
         styleSrc: ["'self'", "'unsafe-inline'"],
+        styleSrcElem: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", "data:", "blob:"],
         connectSrc: ["'self'", "https://api.remove.bg", "https://*.upstash.io"],
         fontSrc: ["'self'"],
@@ -36,6 +39,7 @@ app.use(
       },
     },
     crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
   })
 );
 
