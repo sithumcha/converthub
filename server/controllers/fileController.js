@@ -5,9 +5,6 @@ const conversionQueue = require('../config/queue');
 const path = require('path');
 const fs = require('fs');
 
-// @desc    Convert file
-// @route   POST /api/files/convert
-// @access  Private
 exports.convertFile = async (req, res) => {
   try {
     if (!req.file) {
@@ -20,7 +17,7 @@ exports.convertFile = async (req, res) => {
     }
 
     const originalFormat = path.extname(req.file.originalname).toLowerCase().replace('.', '');
-    
+
     const conversion = await Conversion.create({
       userId: req.user.id,
       type: 'file-convert',
@@ -33,7 +30,6 @@ exports.convertFile = async (req, res) => {
       status: 'pending'
     });
 
-    // Add job to Bull queue
     const job = await conversionQueue.add({
       type: 'file-convert',
       filePath: req.file.path,
@@ -55,9 +51,6 @@ exports.convertFile = async (req, res) => {
   }
 };
 
-// @desc    Get conversion history
-// @route   GET /api/files/history
-// @access  Private
 exports.getHistory = async (req, res) => {
   try {
     const history = await Conversion.find({ userId: req.user.id }).sort('-createdAt');
@@ -67,9 +60,6 @@ exports.getHistory = async (req, res) => {
   }
 };
 
-// @desc    Batch download converted files as ZIP
-// @route   POST /api/files/batch-download
-// @access  Private
 exports.batchDownload = async (req, res) => {
   try {
     const { conversionIds } = req.body;
@@ -100,16 +90,11 @@ exports.batchDownload = async (req, res) => {
         zipName: zipFileName
       }
     });
-
-    // Optional: Schedule zip deletion after download
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// @desc    Get conversion status
-// @route   GET /api/files/status/:id
-// @access  Private
 exports.getConversionStatus = async (req, res) => {
   try {
     const conversion = await Conversion.findOne({
@@ -129,20 +114,21 @@ exports.getConversionStatus = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
-// @desc    Download converted file
+
+// ✅ @desc    Download converted file (with Cross-Origin headers)
 // @route   GET /api/files/download/:id
 // @access  Private
 exports.downloadFile = async (req, res) => {
   try {
     console.log(`\n📥 Download requested for ID: ${req.params.id}`);
-    
+
     const conversion = await Conversion.findById(req.params.id);
-    
+
     if (!conversion) {
       console.log(`❌ Conversion not found in DB: ${req.params.id}`);
       return res.status(404).json({ success: false, message: 'File record not found' });
     }
-    
+
     console.log(`✅ Conversion found in DB:`, {
       id: conversion._id,
       status: conversion.status,
@@ -150,45 +136,40 @@ exports.downloadFile = async (req, res) => {
       filename: conversion.convertedFile?.filename,
       userId: conversion.userId
     });
-    
-    // Check ownership
-    // Note: Checking against req.user.id (string) vs conversion.userId (ObjectId)
+
     if (conversion.userId.toString() !== req.user.id.toString()) {
       console.log(`❌ Unauthorized: User ${req.user.id} tried to access file of user ${conversion.userId}`);
       return res.status(403).json({ success: false, message: 'Unauthorized access to this file' });
     }
-    
+
     const filePath = conversion.convertedFile?.path;
-    
+
     if (!filePath) {
       console.log(`❌ No file path in database for conversion: ${req.params.id}`);
       return res.status(404).json({ success: false, message: 'File path not found in database' });
     }
-    
+
     console.log(`📁 Checking file path: ${filePath}`);
-    
-    // Make path absolute if it's relative
+
     let absolutePath = filePath;
     if (!path.isAbsolute(filePath)) {
-      // Assuming filePath is relative to project root
       absolutePath = path.resolve(filePath);
       console.log(`📁 Converted to absolute path: ${absolutePath}`);
     }
-    
+
     let fileExists = fs.existsSync(absolutePath);
     console.log(`📁 File exists: ${fileExists}`);
-    
+
     if (!fileExists) {
       console.log(`❌ File not found at: ${absolutePath}`);
-      
-      // Try to find file anywhere in uploads/converted folders
+
       const baseFilename = path.basename(filePath);
       const searchPaths = [
         path.join(process.cwd(), 'uploads', baseFilename),
         path.join(process.cwd(), 'converted', baseFilename),
         path.join(process.cwd(), 'temp', baseFilename)
       ];
-      
+
       console.log('🔍 Searching in alternative locations:');
       for (const altPath of searchPaths) {
         console.log(`   Checking: ${altPath}`);
@@ -200,34 +181,35 @@ exports.downloadFile = async (req, res) => {
         }
       }
     }
-    
+
     if (!fileExists) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
         error: 'File not found on server',
         path: filePath,
         message: 'The file may have been deleted or expired'
       });
     }
-    
-    // Get file stats
+
     const stats = fs.statSync(absolutePath);
     console.log(`📁 File stats:`, {
       size: stats.size,
       created: stats.birthtime,
       modified: stats.mtime
     });
-    
+
     const filename = conversion.convertedFile.filename || path.basename(absolutePath);
-    
-    // Force download by setting Content-Disposition to attachment
+
+    // ✅ Cross-Origin headers for blob download
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Content-Type', conversion.convertedFile.mimetype || 'application/octet-stream');
     res.setHeader('Content-Length', stats.size);
-    
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
+
     console.log(`✅ Sending file: ${filename}\n`);
     res.sendFile(absolutePath);
-    
+
   } catch (error) {
     console.error('❌ Download error:', error);
     res.status(500).json({ success: false, message: 'Download failed: ' + error.message });
