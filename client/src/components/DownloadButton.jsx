@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { fileService } from '../services/api';
 import { Loader2, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -7,10 +6,11 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
     const [loading, setLoading] = useState(false);
 
     const handleDownload = async () => {
-        console.log('🔍 DOWNLOAD BUTTON CLICKED');
+        console.log('========================================');
+        console.log('🔍 DownloadButton clicked');
         console.log('🔍 conversionId:', conversionId);
 
-        // 1. Check token
+        // Check token
         const token = localStorage.getItem('token');
         console.log('🔍 Token exists:', token ? '✅ YES' : '❌ NO');
 
@@ -27,7 +27,34 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
 
         setLoading(true);
         try {
-            const blob = await fileService.downloadFile(conversionId, filename);
+            // ✅ Direct fetch with correct headers (same as working console test)
+            const response = await fetch(`https://converthub-api.onrender.com/api/files/download/${conversionId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            console.log('📡 Response status:', response.status);
+
+            if (response.status === 401) {
+                console.error('❌ 401 Unauthorized - Token invalid or expired');
+                localStorage.removeItem('token');
+                toast.error('Session expired. Please login again.');
+                window.location.href = '/login';
+                return;
+            }
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Response error:', errorText);
+                throw new Error(`Download failed: ${response.status}`);
+            }
+
+            const blob = await response.blob();
+            console.log('📦 Blob size:', blob.size, 'bytes');
 
             // Create download link
             const url = window.URL.createObjectURL(blob);
@@ -40,12 +67,14 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
             window.URL.revokeObjectURL(url);
 
             toast.success('Download started!');
+            console.log('✅ Download completed successfully');
         } catch (error) {
-            console.error('Download error:', error);
+            console.error('❌ Download error:', error);
             toast.error(error.message || 'Download failed');
         } finally {
             setLoading(false);
         }
+        console.log('========================================');
     };
 
     return (
