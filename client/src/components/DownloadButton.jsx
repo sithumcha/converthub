@@ -7,35 +7,27 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
     const [loading, setLoading] = useState(false);
 
     const handleDownload = async () => {
-        console.log('========================================');
         console.log('🔍 DOWNLOAD BUTTON CLICKED');
         console.log('🔍 conversionId:', conversionId);
 
-        // Check token
+        // 1. Check token
         const token = localStorage.getItem('token');
-        console.log('🔍 Token from localStorage:', token ? '✅ EXISTS' : '❌ NOT FOUND');
-        if (token) {
-            console.log('🔍 Token preview:', token.substring(0, 40) + '...');
-        }
+        console.log('🔍 Token exists:', token ? '✅ YES' : '❌ NO');
 
-        if (!conversionId) {
-            console.error('❌ No conversionId provided!');
-            toast.error('No file ID available');
+        if (!token) {
+            toast.error('Please login first');
+            window.location.href = '/login';
             return;
         }
 
-        if (!token) {
-            console.error('❌ No token found! Please login again.');
-            toast.error('No token found. Please login again.');
-            window.location.href = '/login';
+        if (!conversionId) {
+            toast.error('No file ID available');
             return;
         }
 
         setLoading(true);
         try {
-            console.log('🔍 Calling fileService.downloadFile...');
             const blob = await fileService.downloadFile(conversionId, filename);
-            console.log('✅ Download successful, blob size:', blob.size, 'bytes');
 
             // Create download link
             const url = window.URL.createObjectURL(blob);
@@ -48,14 +40,12 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
             window.URL.revokeObjectURL(url);
 
             toast.success('Download started!');
-            console.log('✅ Download started successfully');
         } catch (error) {
-            console.error('❌ Download error:', error);
+            console.error('Download error:', error);
             toast.error(error.message || 'Download failed');
         } finally {
             setLoading(false);
         }
-        console.log('========================================');
     };
 
     return (
