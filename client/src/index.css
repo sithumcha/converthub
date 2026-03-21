@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  body {
+    @apply bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100;
+  }
+}
+
 :root {
   --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
 }
