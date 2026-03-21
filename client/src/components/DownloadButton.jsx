@@ -28,17 +28,16 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
 
         setLoading(true);
         try {
-            const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-            const url = `${API_BASE}/api/files/download/${conversionId}`;
+            // ✅ Hardcoded URL - exact same as manual fetch
+            const url = `https://converthub-api.onrender.com/api/files/download/${conversionId}`;
             console.log('🔍 Download URL:', url);
 
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include'
+                    'Authorization': `Bearer ${token}`
+                }
+                // ✅ No credentials: 'include' - same as manual fetch
             });
 
             console.log('📡 Response status:', response.status);
@@ -58,7 +57,6 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
 
             const blob = await response.blob();
             console.log('📦 Blob size:', blob.size, 'bytes');
-            console.log('📦 Blob type:', blob.type);
 
             const downloadUrl = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
