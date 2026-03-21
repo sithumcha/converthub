@@ -14,15 +14,15 @@ let conversionQueue;
 
 if (!REDIS_ENABLED) {
   console.log('⚠️ Redis is disabled (REDIS_ENABLED=false). Queue system will not be active.');
-  
+
   // Create a mock queue object
   conversionQueue = {
     add: async (data) => {
       console.log('📝 [MOCK QUEUE] Job added (but not processed):', data.type);
       return { id: 'mock-job-' + Date.now() };
     },
-    on: () => {},
-    process: () => {},
+    on: () => { },
+    process: () => { },
     isMock: true
   };
 } else {
@@ -81,7 +81,7 @@ if (!REDIS_ENABLED) {
     const { type, filePath, originalName, targetFormat, options, userId, conversionId } = job.data;
     const outputDir = 'converted';
     const SERVER_URL = process.env.SERVER_URL || 'http://localhost:5000';
-    
+
     try {
       if (!fs.existsSync(outputDir)) {
         await fs.ensureDir(outputDir);
@@ -111,8 +111,8 @@ if (!REDIS_ENABLED) {
           // For simplicity in the universal schema, if it's multiple files, we might need a zip or just return the first.
           // Let's handle split by returning the array and letting the schema store it.
           if (Array.isArray(result)) {
-            result = { 
-              fileName: result[0].fileName || result[0], 
+            result = {
+              fileName: result[0].fileName || result[0],
               path: path.join(outputDir, result[0].fileName || result[0]),
               size: 0, // Placeholder
               mimetype: 'application/pdf',
@@ -194,7 +194,7 @@ if (!REDIS_ENABLED) {
     } catch (err) {
       console.error(`Job ${job.id} failed:`, err);
       if (conversionId) {
-        await Conversion.findByIdAndUpdate(conversionId, { 
+        await Conversion.findByIdAndUpdate(conversionId, {
           status: 'failed',
           error: { message: err.message, stack: err.stack }
         });
