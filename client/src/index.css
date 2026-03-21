@@ -34,5 +34,39 @@ body {
 
 .btn-primary {
   background: var(--primary-gradient);
-  @apply text-white px-6 py-2 rounded-lg font-medium transition-transform hover:scale-105 active:scale-95 shadow-lg;
+  @apply text-white px-4 py-2 sm:px-6 sm:py-2 rounded-lg font-medium transition-transform hover:scale-105 active:scale-95 shadow-lg;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 640px) {
+  .container {
+    @apply px-4;
+  }
+
+  h1 {
+    font-size: 1.875rem !important;
+  }
+
+  h2 {
+    font-size: 1.5rem !important;
+  }
+
+  .grid {
+    gap: 1rem !important;
+  }
+
+  .glass {
+    padding: 1rem !important;
+  }
+}
+
+/* Fix for tables on mobile */
+@media (max-width: 640px) {
+  .overflow-x-auto {
+    overflow-x: auto;
+  }
+
+  table {
+    min-width: 600px;
+  }
 }
