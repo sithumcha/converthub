@@ -117,16 +117,13 @@ const PDFToolkit = () => {
         throw new Error("No conversion ID received from server. Response: " + JSON.stringify(res.data));
       }
 
-      // After pollStatus
       const finalResult = await pollStatus(conversionId);
       console.log('🔍 pollStatus finalResult:', finalResult);
 
-      // ✅ TEMPORARY: Use hardcoded ID that works
-      const workingId = '69bd8646935b9abc21789234'; // The one that works in console test
-
+      // ✅ Use REAL conversionId from server
       setResult({
         ...finalResult,
-        conversionId: workingId,  // Use working ID
+        conversionId: conversionId,  // Real ID, NOT hardcoded
         _id: finalResult._id || conversionId
       });
 
@@ -295,7 +292,6 @@ const PDFToolkit = () => {
               <h3 className="text-2xl font-black text-green-900 dark:text-green-400 mb-2">Success!</h3>
               <p className="text-green-700 dark:text-green-500/80 mb-6 font-medium">Your request has been processed.</p>
 
-              {/* ✅ DownloadButton with conversionId */}
               {mode !== 'split' ? (
                 <DownloadButton
                   conversionId={result.conversionId}

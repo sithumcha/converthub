@@ -10,9 +10,8 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
         console.log('🔍 DOWNLOAD BUTTON CLICKED');
         console.log('🔍 conversionId:', conversionId);
 
-        // ✅ EXACT same code as console test
         const token = localStorage.getItem('token');
-        console.log('🔍 Token:', token ? token.substring(0, 30) + '...' : 'NO TOKEN');
+        console.log('🔍 Token:', token ? '✅ YES' : '❌ NO');
 
         if (!token) {
             toast.error('Please login first');
@@ -27,11 +26,10 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
 
         setLoading(true);
         try {
-            // ✅ EXACT same URL as console test
+            // ✅ Hardcoded backend URL
             const url = `https://converthub-api.onrender.com/api/files/download/${conversionId}`;
             console.log('🔍 URL:', url);
 
-            // ✅ EXACT same fetch as console test
             const response = await fetch(url, {
                 method: 'GET',
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -53,7 +51,6 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
             const blob = await response.blob();
             console.log('📦 Blob size:', blob.size);
 
-            // ✅ EXACT same download code as console test
             const urlBlob = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = urlBlob;

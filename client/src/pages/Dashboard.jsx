@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fileService } from '../services/api';
+import DownloadButton from '../components/DownloadButton';
 import { Download, Clock, CheckCircle, XCircle, Trash2, Archive, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -26,7 +27,7 @@ const Dashboard = () => {
   };
 
   const handleSelect = (id) => {
-    setSelected(prev => 
+    setSelected(prev =>
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
   };
@@ -51,10 +52,10 @@ const Dashboard = () => {
           <h1 className="text-3xl font-bold dark:text-white mb-2">Conversion History</h1>
           <p className="text-slate-500 dark:text-slate-400">View and managed your processed files</p>
         </motion.div>
-        
+
         <AnimatePresence>
           {selected.length > 0 && (
-            <motion.button 
+            <motion.button
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
@@ -72,14 +73,14 @@ const Dashboard = () => {
 
       {loading ? (
         <div className="flex justify-center p-20 dark:text-white">
-          <motion.div 
+          <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
             className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full"
           />
         </div>
       ) : history.length === 0 ? (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="glass rounded-2xl p-20 text-center border border-slate-200 dark:border-slate-800"
@@ -91,7 +92,7 @@ const Dashboard = () => {
           <p className="text-slate-500">Your history will appear here once you convert files.</p>
         </motion.div>
       ) : (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           className="glass rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm"
@@ -111,16 +112,16 @@ const Dashboard = () => {
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800 dark:text-slate-300">
                 <AnimatePresence>
                   {history.map((item, index) => (
-                    <motion.tr 
-                      key={item._id} 
+                    <motion.tr
+                      key={item._id}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
                       className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors"
                     >
                       <td className="px-6 py-4">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           checked={selected.includes(item._id)}
                           onChange={() => handleSelect(item._id)}
                           disabled={item.status !== 'completed'}
@@ -163,16 +164,12 @@ const Dashboard = () => {
                       </td>
                       <td className="px-6 py-4 text-right">
                         {item.status === 'completed' && !['summarize', 'ocr'].includes(item.type) && (
-                          <motion.a 
-                            whileHover={{ scale: 1.2, y: -2 }}
-                            whileTap={{ scale: 0.9 }}
-                            href={fileService.download(item._id)}
-                            download
+                          <DownloadButton
+                            conversionId={item._id}
+                            filename={item.convertedFile?.filename || 'download.pdf'}
                             className="p-2 inline-block text-indigo-500 hover:text-indigo-600 transition-colors"
                             title="Download"
-                          >
-                            <Download size={20} />
-                          </motion.a>
+                          />
                         )}
                       </td>
                     </motion.tr>
