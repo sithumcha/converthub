@@ -2,15 +2,16 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import { imageService, fileService } from '../services/api';
+import DownloadButton from '../components/DownloadButton';
 import { Image as ImageIcon, Send, Download, Loader2, CheckCircle2, AlertCircle, Trash2, Sliders, Maximize, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const ImageTools = () => {
   const location = useLocation();
   const [file, setFile] = useState(null);
-  const [mode, setMode] = useState(location.state?.mode || 'process'); // 'process' or 'remove-bg'
+  const [mode, setMode] = useState(location.state?.mode || 'process');
   const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
-  
+
   useEffect(() => {
     if (location.state?.mode) {
       setMode(location.state.mode);
@@ -47,21 +48,21 @@ const ImageTools = () => {
   const pollStatus = async (id) => {
     let attempts = 0;
     const maxAttempts = 30;
-    
+
     return new Promise((resolve, reject) => {
       const interval = setInterval(async () => {
         try {
           const res = await fileService.getStatus(id);
           const data = res.data.data;
-          
+
           if (data.status === 'completed') {
             clearInterval(interval);
             resolve(data);
           } else if (data.status === 'failed') {
             clearInterval(interval);
-            reject(new Error('Background removal failed'));
+            reject(new Error('Processing failed'));
           }
-          
+
           attempts++;
           if (attempts >= maxAttempts) {
             clearInterval(interval);
@@ -82,13 +83,13 @@ const ImageTools = () => {
     setError('');
 
     try {
-      const res = mode === 'process' 
+      const res = mode === 'process'
         ? await imageService.process(file, options)
         : await imageService.removeBg(file);
-      
+
       const conversionId = res.data.conversionId;
       const finalResult = await pollStatus(conversionId);
-      
+
       setResult(finalResult);
       setStatus('completed');
     } catch (err) {
@@ -109,17 +110,15 @@ const ImageTools = () => {
       <div className="flex justify-center gap-4 mb-10">
         <button
           onClick={() => { setMode('process'); setStatus('idle'); setResult(null); }}
-          className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all ${
-            mode === 'process' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-white dark:bg-slate-900 dark:text-slate-300'
-          }`}
+          className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all ${mode === 'process' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-white dark:bg-slate-900 dark:text-slate-300'
+            }`}
         >
           <Sliders size={20} /> Basic Tools
         </button>
         <button
           onClick={() => { setMode('remove-bg'); setStatus('idle'); setResult(null); }}
-          className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all ${
-            mode === 'remove-bg' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-white dark:bg-slate-900 dark:text-slate-300'
-          }`}
+          className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all ${mode === 'remove-bg' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-white dark:bg-slate-900 dark:text-slate-300'
+            }`}
         >
           <Sparkles size={20} /> AI BG Remover
         </button>
@@ -133,9 +132,8 @@ const ImageTools = () => {
         >
           <div
             {...getRootProps()}
-            className={`glass border-2 border-dashed rounded-3xl p-12 text-center transition-all cursor-pointer h-64 flex flex-col justify-center gap-4 ${
-              isDragActive ? 'border-indigo-500 bg-indigo-50/10' : 'border-slate-300 dark:border-slate-800 hover:border-indigo-400'
-            }`}
+            className={`glass border-2 border-dashed rounded-3xl p-12 text-center transition-all cursor-pointer h-64 flex flex-col justify-center gap-4 ${isDragActive ? 'border-indigo-500 bg-indigo-50/10' : 'border-slate-300 dark:border-slate-800 hover:border-indigo-400'
+              }`}
           >
             <input {...getInputProps()} />
             <div className="bg-indigo-100 dark:bg-indigo-900/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-indigo-600 mb-2">
@@ -248,14 +246,14 @@ const ImageTools = () => {
           animate={{ opacity: 1, x: 0 }}
           className="flex flex-col gap-6"
         >
-          {status === 'completed' ? (
+          {status === 'completed' && result && (
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
               className="glass rounded-[3rem] p-12 text-center bg-white dark:bg-slate-900 shadow-2xl shadow-indigo-500/10 flex-1 flex flex-col items-center justify-center gap-8 border border-slate-100 dark:border-slate-800"
             >
-              <motion.div 
+              <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 400, damping: 15 }}
@@ -265,17 +263,16 @@ const ImageTools = () => {
               </motion.div>
               <div className="text-center">
                 <h3 className="text-3xl font-black dark:text-white mb-2 tracking-tight">Success!</h3>
-                <p className="text-slate-500 font-medium">{result.convertedFile.filename}</p>
+                <p className="text-slate-500 font-medium">{result.convertedFile?.filename || 'Image processed'}</p>
               </div>
-              <motion.a
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                href={fileService.download(result._id)}
-                download
+
+              {/* ✅ Use DownloadButton instead of direct link */}
+              <DownloadButton
+                conversionId={result._id}
+                filename={result.convertedFile?.filename || 'image.png'}
                 className="btn-primary px-12 py-5 rounded-2xl flex items-center gap-3 shadow-2xl shadow-indigo-500/30 text-lg font-black"
-              >
-                <Download size={22} /> Download Now
-              </motion.a>
+              />
+
               <button
                 onClick={() => { setFile(null); setStatus('idle'); setResult(null); }}
                 className="text-slate-500 hover:text-indigo-600 font-black uppercase tracking-widest text-xs transition-colors"
@@ -283,10 +280,12 @@ const ImageTools = () => {
                 Process another image
               </button>
             </motion.div>
-          ) : (
-            <div className="glass rounded-3xl p-10 flex-1 flex flex-col items-center justify-center text-center text-slate-400 bg-white/20 dark:bg-slate-900/20 border-2 border-dashed border-slate-300 dark:border-slate-800">
-              <Sliders size={64} className="mb-6 opacity-20" />
-              <p className="text-lg">Upload an image to see results and adjustment previews</p>
+          )}
+
+          {status === 'processing' && (
+            <div className="glass rounded-3xl p-10 flex-1 flex flex-col items-center justify-center text-center">
+              <Loader2 className="animate-spin w-12 h-12 text-indigo-500 mb-4" />
+              <p className="text-slate-500">Processing your image...</p>
             </div>
           )}
 
@@ -298,6 +297,13 @@ const ImageTools = () => {
             >
               <AlertCircle size={18} /> {error}
             </motion.div>
+          )}
+
+          {status === 'idle' && !result && (
+            <div className="glass rounded-3xl p-10 flex-1 flex flex-col items-center justify-center text-center text-slate-400 bg-white/20 dark:bg-slate-900/20 border-2 border-dashed border-slate-300 dark:border-slate-800">
+              <Sliders size={64} className="mb-6 opacity-20" />
+              <p className="text-lg">Upload an image to see results and adjustment previews</p>
+            </div>
           )}
         </motion.div>
       </div>
