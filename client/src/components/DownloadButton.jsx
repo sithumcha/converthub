@@ -5,15 +5,14 @@ import toast from 'react-hot-toast';
 const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '', children }) => {
     const [loading, setLoading] = useState(false);
 
-    const handleDownload = async (e) => {
-        if (e && e.preventDefault) e.preventDefault();
-        if (e && e.stopPropagation) e.stopPropagation();
-
-        console.log('🔍 DownloadButton clicked');
+    const handleDownload = async () => {
+        console.log('========================================');
+        console.log('🔍 DOWNLOAD BUTTON CLICKED');
         console.log('🔍 conversionId:', conversionId);
 
+        // ✅ EXACT same code as console test
         const token = localStorage.getItem('token');
-        console.log('🔍 Token exists:', token ? 'YES' : 'NO');
+        console.log('🔍 Token:', token ? token.substring(0, 30) + '...' : 'NO TOKEN');
 
         if (!token) {
             toast.error('Please login first');
@@ -22,70 +21,64 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
         }
 
         if (!conversionId) {
-            toast.error('No file ID available');
+            toast.error('No file ID');
             return;
         }
 
         setLoading(true);
         try {
-            // ✅ Hardcoded URL - exact same as manual fetch
+            // ✅ EXACT same URL as console test
             const url = `https://converthub-api.onrender.com/api/files/download/${conversionId}`;
-            console.log('🔍 Download URL:', url);
+            console.log('🔍 URL:', url);
 
+            // ✅ EXACT same fetch as console test
             const response = await fetch(url, {
                 method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-                // ✅ No credentials: 'include' - same as manual fetch
+                headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            console.log('📡 Response status:', response.status);
+            console.log('📡 Status:', response.status);
 
             if (response.status === 401) {
-                console.error('❌ 401 Unauthorized');
                 localStorage.removeItem('token');
-                toast.error('Session expired. Please login again.');
+                toast.error('Session expired. Login again.');
                 window.location.href = '/login';
                 return;
             }
 
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Download failed: ${response.status} - ${errorText}`);
+                throw new Error(`Failed: ${response.status}`);
             }
 
             const blob = await response.blob();
-            console.log('📦 Blob size:', blob.size, 'bytes');
+            console.log('📦 Blob size:', blob.size);
 
-            const downloadUrl = window.URL.createObjectURL(blob);
+            // ✅ EXACT same download code as console test
+            const urlBlob = URL.createObjectURL(blob);
             const link = document.createElement('a');
-            link.href = downloadUrl;
-            link.setAttribute('download', filename);
+            link.href = urlBlob;
+            link.download = filename;
             document.body.appendChild(link);
             link.click();
-            link.remove();
-
-            setTimeout(() => {
-                window.URL.revokeObjectURL(downloadUrl);
-            }, 100);
+            document.body.removeChild(link);
+            URL.revokeObjectURL(urlBlob);
 
             toast.success('Download started!');
             console.log('✅ Download completed');
         } catch (error) {
-            console.error('❌ Download error:', error);
+            console.error('❌ Error:', error);
             toast.error(error.message || 'Download failed');
         } finally {
             setLoading(false);
         }
+        console.log('========================================');
     };
 
     return (
         <button
-            type="button"
             onClick={handleDownload}
             disabled={loading}
-            className={`px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2 disabled:opacity-50 transition-all ${className}`}
+            className={`px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2 disabled:opacity-50 ${className}`}
         >
             {loading ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
             {children || (loading ? 'Downloading...' : 'Download')}
