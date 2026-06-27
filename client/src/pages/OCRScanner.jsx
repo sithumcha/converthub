@@ -12,7 +12,7 @@ const OCRScanner = () => {
   const [extractedText, setExtractedText] = useState('');
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
   const onDrop = (acceptedFiles) => {
     if (acceptedFiles.length > 0) {
@@ -38,7 +38,7 @@ const OCRScanner = () => {
     formData.append('file', file);
 
     try {
-      const res = await axios.post(`${SERVER_URL}/api/ai/ocr`, formData);
+      const res = await axios.post(`${API_URL}/ai/ocr`, formData);
       setExtractedText(res.data.text);
       toast.success('Text extracted successfully!');
     } catch (error) {

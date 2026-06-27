@@ -16,8 +16,8 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
-        const res = await axios.get(`${SERVER_URL}/api/user/dashboard`, { withCredentials: true });
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const res = await axios.get(`${API_URL}/user/dashboard`, { withCredentials: true });
         setData(res.data);
       } catch (err) {
         // Fallback mock data if server fails or history is empty

@@ -13,7 +13,7 @@ const TextToSpeech = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null);
   
-  const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
   const handleGenerate = async () => {
     if (!text.trim()) return;
@@ -23,7 +23,7 @@ const TextToSpeech = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post(`${SERVER_URL}/api/extra/tts`, 
+      const res = await axios.post(`${API_URL}/extra/tts`, 
         { text, lang },
         { headers: { Authorization: `Bearer ${token}` } }
       );

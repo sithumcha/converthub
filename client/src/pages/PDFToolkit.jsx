@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 const PDFToolkit = () => {
   const location = useLocation();
   const [mode, setMode] = useState(location.state?.mode || 'merge');
-  const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
   useEffect(() => {
     if (location.state?.mode) {

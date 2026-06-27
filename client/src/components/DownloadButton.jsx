@@ -26,8 +26,8 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
 
         setLoading(true);
         try {
-            const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
-            const url = `${SERVER_URL}/api/files/download/${conversionId}`;
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+            const url = `${API_URL}/files/download/${conversionId}`;
             console.log('🔍 URL:', url);
 
             const response = await fetch(url, {

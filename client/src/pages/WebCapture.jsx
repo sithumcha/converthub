@@ -12,7 +12,7 @@ const WebCapture = () => {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('idle');
   const [result, setResult] = useState(null);
-  const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
   const handleCapture = async (e) => {
     e.preventDefault();
@@ -24,7 +24,7 @@ const WebCapture = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post(`${SERVER_URL}/api/extra/web-capture`, 
+      const res = await axios.post(`${API_URL}/extra/web-capture`, 
         { url, type },
         { headers: { Authorization: `Bearer ${token}` } }
       );

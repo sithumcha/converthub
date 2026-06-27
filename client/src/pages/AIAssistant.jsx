@@ -14,7 +14,7 @@ const AIAssistant = () => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [summarizing, setSummarizing] = useState(false);
-  const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
   const onDrop = (acceptedFiles) => {
     if (acceptedFiles.length > 0) {
@@ -38,7 +38,7 @@ const AIAssistant = () => {
     formData.append('file', file);
 
     try {
-      const res = await axios.post(`${SERVER_URL}/api/ai/summarize`, formData);
+      const res = await axios.post(`${API_URL}/ai/summarize`, formData);
       setSummary(res.data.summary);
       setServerFilePath(res.data.filePath);
       toast.success('Summary generated successfully!');
@@ -59,7 +59,7 @@ const AIAssistant = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post(`${SERVER_URL}/api/ai/chat`, {
+      const res = await axios.post(`${API_URL}/ai/chat`, {
         filePath: serverFilePath,
         question: userMessage
       });

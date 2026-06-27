@@ -11,7 +11,7 @@ const ImageTools = () => {
   const location = useLocation();
   const [file, setFile] = useState(null);
   const [mode, setMode] = useState(location.state?.mode || 'process');
-  const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
   useEffect(() => {
     if (location.state?.mode) {
@@ -298,7 +298,7 @@ const ImageTools = () => {
                 <div className="relative w-48 h-48 mx-auto mb-6 rounded-2xl overflow-hidden border-4 border-white dark:border-slate-800 shadow-xl bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center">
                   <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none" />
                   <img 
-                    src={`${SERVER_URL}/api/files/download/${result._id}?token=${localStorage.getItem('token')}`} 
+                    src={`${API_URL}/files/download/${result._id}?token=${localStorage.getItem('token')}`} 
                     alt="Processed Preview" 
                     className="w-full h-full object-contain relative z-10" 
                     onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
