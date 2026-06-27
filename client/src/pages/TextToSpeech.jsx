@@ -13,7 +13,13 @@ const TextToSpeech = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null);
   
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const API_URL = (() => {
+  let url = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  if (url && !url.endsWith('/api') && !url.endsWith('/api/')) {
+    url = url.replace(/\/$/, '') + '/api';
+  }
+  return url;
+})();
 
   const handleGenerate = async () => {
     if (!text.trim()) return;

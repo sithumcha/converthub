@@ -12,7 +12,13 @@ const WebCapture = () => {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('idle');
   const [result, setResult] = useState(null);
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const API_URL = (() => {
+  let url = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  if (url && !url.endsWith('/api') && !url.endsWith('/api/')) {
+    url = url.replace(/\/$/, '') + '/api';
+  }
+  return url;
+})();
 
   const handleCapture = async (e) => {
     e.preventDefault();

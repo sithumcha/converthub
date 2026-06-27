@@ -11,7 +11,13 @@ const ImageTools = () => {
   const location = useLocation();
   const [file, setFile] = useState(null);
   const [mode, setMode] = useState(location.state?.mode || 'process');
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const API_URL = (() => {
+  let url = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  if (url && !url.endsWith('/api') && !url.endsWith('/api/')) {
+    url = url.replace(/\/$/, '') + '/api';
+  }
+  return url;
+})();
 
   useEffect(() => {
     if (location.state?.mode) {

@@ -16,7 +16,13 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const API_URL = (() => {
+  let url = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  if (url && !url.endsWith('/api') && !url.endsWith('/api/')) {
+    url = url.replace(/\/$/, '') + '/api';
+  }
+  return url;
+})();
         const res = await axios.get(`${API_URL}/user/dashboard`, { withCredentials: true });
         setData(res.data);
       } catch (err) {
