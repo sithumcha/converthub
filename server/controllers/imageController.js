@@ -2,6 +2,10 @@ const Conversion = require('../models/Conversion');
 const { incrementUsage } = require('../middleware/usageMiddleware');
 const conversionQueue = require('../config/queue');
 const path = require('path');
+const imageService = require('../services/imageService');
+const fs = require('fs/promises');
+const archiver = require('archiver');
+const fsSync = require('fs');
 
 /**
  * Convert or Compress Image
@@ -67,8 +71,8 @@ exports.removeBackground = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please upload an image file' });
     }
 
-    if (!process.env.REMOVE_BG_KEY) {
-      return res.status(500).json({ success: false, message: 'Remove.bg API key is not configured' });
+    if (!process.env.PHOTOROOM_API_KEY) {
+      return res.status(500).json({ success: false, message: 'PhotoRoom API key is not configured' });
     }
 
     // Create pending record
@@ -100,5 +104,44 @@ exports.removeBackground = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+/**
+ * Batch Process Images
+ * POST /api/images/batch
+ */
+exports.batchProcess = async (req, res, next) => {
+  try {
+    if (req.user.tier !== 'pro') {
+      return res.status(403).json({ message: 'Batch processing is a PRO feature.' });
+    }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: 'No files uploaded' });
+    }
+
+    const format = req.body.format || 'jpeg';
+    const zipPath = path.join(__dirname, '..', 'converted', `batch-${Date.now()}.zip`);
+    const output = fsSync.createWriteStream(zipPath);
+    const archive = archiver('zip', { zlib: { level: 9 } });
+
+    output.on('close', () => {
+      res.json({ success: true, fileUrl: `/converted/${path.basename(zipPath)}` });
+    });
+
+    archive.on('error', (err) => { throw err; });
+    archive.pipe(output);
+
+    for (const file of req.files) {
+      const options = { format, width: req.body.width, height: req.body.height };
+      const outPath = await imageService.convertImage(file.path, options);
+      archive.file(outPath, { name: path.basename(outPath) });
+    }
+
+    await archive.finalize();
+
+  } catch (error) {
+    next(error);
   }
 };

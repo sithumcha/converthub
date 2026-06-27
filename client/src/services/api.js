@@ -37,6 +37,7 @@ api.interceptors.response.use(
 // Auth Services
 export const authService = {
   login: (email, password) => api.post('/auth/login', { email, password }),
+  googleLogin: (token) => api.post('/auth/google', { token }),
   register: (username, email, password) => api.post('/auth/register', { username, email, password }),
   logout: () => api.get('/auth/logout'),
   getMe: () => api.get('/auth/me')
@@ -147,6 +148,13 @@ export const pdfService = {
     return api.post('/pdf/protect', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
+  },
+  imagesToPdf: (files) => {
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+    return api.post('/pdf/images-to-pdf', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
   }
 };
 
@@ -187,7 +195,45 @@ export const ocrService = {
 };
 
 export const paymentService = {
-  createCheckoutSession: () => api.post('/payments/create-checkout-session')
+  createCheckoutSession: () => api.post('/payments/create-checkout-session'),
+  cancelSubscription: () => api.post('/payments/cancel-subscription')
+};
+
+export const userService = {
+  updateProfile: (username) => api.put('/user/profile', { username }),
+  updatePassword: (currentPassword, newPassword) => api.put('/user/password', { currentPassword, newPassword })
+};
+
+export const mediaService = {
+  extractAudio: (file, socketId) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('socketId', socketId);
+    return api.post('/media/extract-audio', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+  compressVideo: (file, socketId) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('socketId', socketId);
+    return api.post('/media/compress-video', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  }
+};
+
+export const batchService = {
+  process: (files, action, socketId) => {
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+    formData.append('action', action);
+    if (socketId) formData.append('socketId', socketId);
+    
+    return api.post('/batch/process', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  }
 };
 
 export default api;

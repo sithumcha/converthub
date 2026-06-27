@@ -225,3 +225,45 @@ exports.protectPDF = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+/**
+ * Convert images to PDF
+ * POST /api/pdf/images-to-pdf
+ */
+exports.imagesToPdf = async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ success: false, message: 'Please upload at least 1 image file' });
+    }
+
+    const conversion = await Conversion.create({
+      userId: req.user.id,
+      type: 'images-to-pdf',
+      originalFiles: req.files.map(f => ({
+        filename: f.originalname,
+        path: f.path,
+        size: f.size,
+        mimetype: f.mimetype
+      })),
+      status: 'pending'
+    });
+
+    const job = await conversionQueue.add({
+      type: 'images-to-pdf',
+      filePath: req.files.map(f => f.path),
+      userId: req.user.id,
+      conversionId: conversion._id
+    });
+
+    res.status(202).json({
+      success: true,
+      message: 'Images to PDF conversion started',
+      jobId: job.id,
+      conversionId: conversion._id,
+      data: conversion
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

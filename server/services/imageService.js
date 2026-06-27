@@ -93,7 +93,7 @@ const imageService = {
   },
 
   /**
-   * Remove background from an image using remove.bg API
+   * Remove background from an image using PhotoRoom API
    * @param {string} inputPath - Source file path
    * @returns {Object} - Result with new file path
    */
@@ -109,13 +109,13 @@ const imageService = {
 
     const formData = new FormData();
     formData.append('image_file', fs.createReadStream(inputPath));
-    formData.append('size', 'auto');
+    formData.append('format', 'png');
 
     try {
-      const response = await axios.post('https://api.remove.bg/v1.0/removebg', formData, {
+      const response = await axios.post('https://sdk.photoroom.com/v1/segment', formData, {
         headers: {
           ...formData.getHeaders(),
-          'X-Api-Key': process.env.REMOVE_BG_KEY,
+          'x-api-key': process.env.PHOTOROOM_API_KEY,
         },
         responseType: 'arraybuffer',
       });
@@ -128,8 +128,8 @@ const imageService = {
         size: response.data.length
       };
     } catch (error) {
-      console.error('Error removing background:', error.response?.data?.toString() || error.message);
-      throw new Error('Failed to remove image background. Check your API key.');
+      console.error('Error removing background via PhotoRoom:', error.response?.data?.toString() || error.message);
+      throw new Error('Failed to remove image background. Check your PhotoRoom API key.');
     }
   }
 };

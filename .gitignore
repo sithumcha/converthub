@@ -27,3 +27,10 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# User Data
+server/uploads/
+server/converted/
+*.mp3
+*.mp4
+*.pdf

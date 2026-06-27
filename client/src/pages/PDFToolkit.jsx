@@ -1,3 +1,4 @@
+import { Helmet } from 'react-helmet-async';
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
@@ -42,8 +43,8 @@ const PDFToolkit = () => {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { 'application/pdf': ['.pdf'] },
-    multiple: mode === 'merge'
+    accept: mode === 'images-to-pdf' ? { 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] } : { 'application/pdf': ['.pdf'] },
+    multiple: mode === 'merge' || mode === 'images-to-pdf'
   });
 
   const pollStatus = async (id) => {
@@ -106,6 +107,8 @@ const PDFToolkit = () => {
         res = await pdfService.toDocx(files[0]);
       } else if (mode === 'protect') {
         res = await pdfService.protect(files[0], password);
+      } else if (mode === 'images-to-pdf') {
+        res = await pdfService.imagesToPdf(files);
       }
 
       console.log('🔍 API Response:', res.data);
@@ -144,10 +147,15 @@ const PDFToolkit = () => {
   };
 
   return (
-    <div className="py-20 px-6 max-w-5xl mx-auto">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-extrabold mb-4 dark:text-white">PDF Toolkit</h1>
-        <p className="text-slate-500 dark:text-slate-400">Professional tools for PDF manipulation</p>
+    <>
+      <Helmet>
+        <title>PDF Toolkit - ConvertHub</title>
+        <meta name="description" content="Professional tools for PDF manipulation. Merge, Split, Compress, Convert and Protect PDFs." />
+      </Helmet>
+      <div className="py-20 px-6 max-w-5xl mx-auto">
+      <div className="text-center mb-16">
+        <h1 className="text-5xl md:text-6xl font-black mb-6 text-gradient tracking-tight">PDF Toolkit</h1>
+        <p className="text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">Professional tools for PDF manipulation</p>
       </div>
 
       <div className="flex flex-wrap justify-center gap-3 mb-10">
@@ -155,13 +163,14 @@ const PDFToolkit = () => {
           { id: 'merge', label: 'Merge', icon: <FilePlus size={18} /> },
           { id: 'split', label: 'Split', icon: <FileMinus size={18} /> },
           { id: 'compress', label: 'Compress', icon: <LayoutGrid size={18} /> },
+          { id: 'images-to-pdf', label: 'Images to PDF', icon: <FilePlus size={18} /> },
           { id: 'to-word', label: 'PDF to Word', icon: <List size={18} /> },
           { id: 'protect', label: 'Protect', icon: <Lock size={18} /> },
         ].map(m => (
           <button
             key={m.id}
             onClick={() => { setMode(m.id); setFiles([]); setResult(null); setStatus('idle'); setPassword(''); }}
-            className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all ${mode === m.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-white dark:bg-slate-900 dark:text-slate-300 hover:bg-slate-50'
+            className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all duration-300 ${mode === m.id ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/30 -translate-y-1' : 'glass hover:-translate-y-1 hover:shadow-md'
               }`}
           >
             {m.icon} {m.label}
@@ -178,7 +187,7 @@ const PDFToolkit = () => {
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
-              className="mb-6 p-6 glass rounded-3xl border border-indigo-100 dark:border-indigo-900/20"
+              className="mb-6 p-6 glass-panel border border-brand-100 dark:border-brand-900/20"
             >
               <label className="block text-sm font-bold mb-2 dark:text-slate-300 flex items-center gap-2">
                 <Lock size={16} className="text-indigo-500" /> Set PDF Password
@@ -195,7 +204,7 @@ const PDFToolkit = () => {
 
           <div
             {...getRootProps()}
-            className={`glass border-2 border-dashed rounded-3xl p-12 text-center transition-all cursor-pointer h-full flex flex-col justify-center gap-4 ${isDragActive ? 'border-indigo-500 bg-indigo-50/10' : 'border-slate-300 dark:border-slate-800 hover:border-indigo-400'
+            className={`glass-panel border-2 border-dashed p-12 text-center transition-all duration-300 cursor-pointer h-full flex flex-col justify-center gap-4 ${isDragActive ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-900/20 scale-[1.02]' : 'border-slate-300 dark:border-slate-700 hover:border-brand-400 hover:shadow-lg'
               }`}
           >
             <input {...getInputProps()} />
@@ -204,9 +213,11 @@ const PDFToolkit = () => {
             </div>
             <div>
               <p className="text-lg font-bold dark:text-white">
-                {mode === 'merge' ? 'Drop multiple PDFs here' : 'Drop your PDF here'}
+                {mode === 'merge' ? 'Drop multiple PDFs here' : mode === 'images-to-pdf' ? 'Drop multiple images here' : 'Drop your PDF here'}
               </p>
-              <p className="text-sm text-slate-500">Only .pdf files are supported</p>
+              <p className="text-sm text-slate-500">
+                {mode === 'images-to-pdf' ? 'Only images (.jpg, .png) are supported' : 'Only .pdf files are supported'}
+              </p>
             </div>
           </div>
         </motion.div>
@@ -214,7 +225,7 @@ const PDFToolkit = () => {
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="glass rounded-3xl p-8 flex flex-col h-full bg-white/50 dark:bg-slate-900/50"
+          className="glass-panel p-8 flex flex-col h-full"
         >
           <div className="flex-1 overflow-y-auto max-h-[300px] mb-6 space-y-3 pr-2">
             {files.length === 0 ? (
@@ -252,7 +263,7 @@ const PDFToolkit = () => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleAction}
-              disabled={loading || (mode === 'merge' && files.length < 2) || (mode === 'protect' && !password)}
+              disabled={loading || ((mode === 'merge' || mode === 'images-to-pdf') && files.length < 1) || (mode === 'protect' && !password)}
               className="w-full btn-primary py-4 flex justify-center items-center gap-2 disabled:opacity-50"
             >
               {loading ? (
@@ -263,6 +274,7 @@ const PDFToolkit = () => {
               ) : (
                 <>
                   {mode === 'merge' ? 'Merge PDFs' :
+                    mode === 'images-to-pdf' ? 'Create PDF' :
                     mode === 'split' ? 'Split PDF' :
                       mode === 'compress' ? 'Compress PDF' :
                         mode === 'protect' ? 'Protect PDF' : 'Convert to Word'}
@@ -338,6 +350,7 @@ const PDFToolkit = () => {
         </motion.div>
       </div>
     </div>
+    </>
   );
 };
 

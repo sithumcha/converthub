@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, User, Loader2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { GoogleLogin } from '@react-oauth/google';
 
 const Signup = () => {
   const [username, setUsername] = useState('');
@@ -12,7 +13,7 @@ const Signup = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -38,6 +39,21 @@ const Signup = () => {
       const errorMsg = err.response?.data?.message || 'Failed to register';
       setError(errorMsg);
       toast.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setLoading(true);
+      const response = await loginWithGoogle(credentialResponse.credential);
+      if (response.success) {
+        toast.success('Successfully registered & logged in with Google!');
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      toast.error('Google registration failed');
     } finally {
       setLoading(false);
     }
@@ -126,6 +142,27 @@ const Signup = () => {
             {loading ? <Loader2 className="animate-spin" size={20} /> : 'Get Started'}
           </motion.button>
         </form>
+
+        <div className="mt-6">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200 dark:border-slate-800"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white dark:bg-[#1a1b1e] text-slate-500">Or continue with</span>
+            </div>
+          </div>
+          
+          <div className="mt-6 flex justify-center">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => toast.error('Google signup failed')}
+              useOneTap
+              theme="filled_blue"
+              shape="pill"
+            />
+          </div>
+        </div>
 
         <p className="mt-8 text-center text-slate-500 dark:text-slate-400 text-sm">
           Already have an account? {' '}

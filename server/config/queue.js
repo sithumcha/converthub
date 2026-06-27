@@ -5,6 +5,7 @@ const { convertImage } = require('../services/imageService');
 const { convertDocument } = require('../services/docService');
 const pdfService = require('../services/pdfService');
 const imageService = require('../services/imageService');
+const mediaService = require('../services/mediaService');
 const Conversion = require('../models/Conversion');
 const User = require('../models/User');
 
@@ -78,7 +79,7 @@ if (!REDIS_ENABLED) {
 
   // Process jobs
   conversionQueue.process(5, async (job) => {
-    const { type, filePath, originalName, targetFormat, options, userId, conversionId } = job.data;
+    const { type, filePath, originalName, targetFormat, options, userId, conversionId, socketId } = job.data;
     const outputDir = 'converted';
     const SERVER_URL = process.env.SERVER_URL || 'http://localhost:5000';
 
@@ -142,12 +143,27 @@ if (!REDIS_ENABLED) {
           result = { fileName: protectName, path: protectPath, size: (await fs.stat(protectPath)).size, mimetype: 'application/pdf' };
           break;
 
+        case 'images-to-pdf':
+          const imagesPdfName = `images_to_pdf_${Date.now()}.pdf`;
+          const imagesPdfPath = path.join(outputDir, imagesPdfName);
+          await pdfService.imagesToPdf(filePath, imagesPdfPath); // filePath is an array of image paths
+          result = { fileName: imagesPdfName, path: imagesPdfPath, size: (await fs.stat(imagesPdfPath)).size, mimetype: 'application/pdf' };
+          break;
+
         case 'image-process':
           result = await imageService.convertImage(filePath, targetFormat, options);
           break;
 
         case 'image-remove-bg':
           result = await imageService.removeBackground(filePath);
+          break;
+
+        case 'video-to-audio':
+          result = await mediaService.extractAudio(filePath, socketId, conversionId);
+          break;
+
+        case 'video-compress':
+          result = await mediaService.compressVideo(filePath, socketId, conversionId);
           break;
 
         default:

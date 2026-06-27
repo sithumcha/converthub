@@ -32,7 +32,17 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     const res = await authService.login(email, password);
 
-    // ✅ Save token to localStorage
+    if (res.data.token) {
+      localStorage.setItem('token', res.data.token);
+    }
+
+    setUser(res.data.user);
+    return res.data;
+  };
+
+  const loginWithGoogle = async (token) => {
+    const res = await authService.googleLogin(token);
+
     if (res.data.token) {
       localStorage.setItem('token', res.data.token);
     }
@@ -69,7 +79,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, checkUser, verifySession }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, register, logout, checkUser, verifySession }}>
       {children}
     </AuthContext.Provider>
   );

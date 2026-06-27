@@ -1,5 +1,9 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
+const crypto = require('crypto');
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Generate JWT and set cookie
 const sendTokenResponse = (user, statusCode, res) => {
@@ -96,6 +100,56 @@ exports.login = async (req, res) => {
     sendTokenResponse(user, 200, res);
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @desc    Google Login
+// @route   POST /api/auth/google
+// @access  Public
+exports.googleLogin = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    // Verify Google Token
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    
+    const { name, email, sub: googleId } = ticket.getPayload();
+
+    // Check if user already exists
+    let user = await User.findOne({ $or: [{ email }, { googleId }] });
+
+    if (!user) {
+      // Create new user
+      // Generate a random password since it's still good practice to have some random hash, 
+      // or we can just omit it since it's optional now. Let's omit it.
+      let baseUsername = name.replace(/\s+/g, '').toLowerCase();
+      let uniqueUsername = baseUsername;
+      let counter = 1;
+      
+      // Ensure unique username
+      while (await User.findOne({ username: uniqueUsername })) {
+        uniqueUsername = `${baseUsername}${counter}`;
+        counter++;
+      }
+
+      user = await User.create({
+        username: uniqueUsername,
+        email,
+        googleId
+      });
+    } else if (!user.googleId) {
+      // If user exists with email but no googleId, link them
+      user.googleId = googleId;
+      await user.save();
+    }
+
+    sendTokenResponse(user, 200, res);
+  } catch (err) {
+    console.error('Google Login Error:', err);
+    res.status(401).json({ success: false, message: 'Google authentication failed' });
   }
 };
 

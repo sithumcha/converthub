@@ -26,8 +26,8 @@ const DownloadButton = ({ conversionId, filename = 'download.pdf', className = '
 
         setLoading(true);
         try {
-            // ✅ Hardcoded backend URL
-            const url = `https://converthub-api.onrender.com/api/files/download/${conversionId}`;
+            const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
+            const url = `${SERVER_URL}/api/files/download/${conversionId}`;
             console.log('🔍 URL:', url);
 
             const response = await fetch(url, {

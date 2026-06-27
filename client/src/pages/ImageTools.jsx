@@ -1,3 +1,4 @@
+import { Helmet } from 'react-helmet-async';
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
@@ -31,6 +32,27 @@ const ImageTools = () => {
   const [status, setStatus] = useState('idle');
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [progress, setProgress] = useState(0);
+
+  // Simulate progress
+  useEffect(() => {
+    let interval;
+    if (status === 'processing') {
+      setProgress(0);
+      interval = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 90) return prev; // Hold at 90% until backend says 100%
+          const increment = Math.random() * 15;
+          return Math.min(prev + increment, 90);
+        });
+      }, 500);
+    } else if (status === 'completed') {
+      setProgress(100);
+    } else {
+      setProgress(0);
+    }
+    return () => clearInterval(interval);
+  }, [status]);
 
   const onDrop = (acceptedFiles) => {
     setFile(acceptedFiles[0]);
@@ -101,24 +123,29 @@ const ImageTools = () => {
   };
 
   return (
-    <div className="py-20 px-6 max-w-5xl mx-auto">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-extrabold mb-4 dark:text-white">Image Studio</h1>
-        <p className="text-slate-500 dark:text-slate-400">Convert, Compress, and Resize your images with ease</p>
+    <>
+      <Helmet>
+        <title>Image Tools - ConvertHub</title>
+        <meta name="description" content="Professional tools for Image processing. Convert, compress, resize, and remove background from images." />
+      </Helmet>
+      <div className="py-20 px-6 max-w-5xl mx-auto">
+      <div className="text-center mb-16">
+        <h1 className="text-5xl md:text-6xl font-black mb-6 text-gradient tracking-tight">Image Studio</h1>
+        <p className="text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">Convert, Compress, and Resize your images with ease</p>
       </div>
 
       <div className="flex justify-center gap-4 mb-10">
         <button
           onClick={() => { setMode('process'); setStatus('idle'); setResult(null); }}
-          className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all ${mode === 'process' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-white dark:bg-slate-900 dark:text-slate-300'
-            }`}
+            className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all duration-300 ${mode === 'process' ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/30 -translate-y-1' : 'glass hover:-translate-y-1 hover:shadow-md'
+              }`}
         >
           <Sliders size={20} /> Basic Tools
         </button>
         <button
           onClick={() => { setMode('remove-bg'); setStatus('idle'); setResult(null); }}
-          className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all ${mode === 'remove-bg' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-white dark:bg-slate-900 dark:text-slate-300'
-            }`}
+            className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all duration-300 ${mode === 'remove-bg' ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/30 -translate-y-1' : 'glass hover:-translate-y-1 hover:shadow-md'
+              }`}
         >
           <Sparkles size={20} /> AI BG Remover
         </button>
@@ -132,18 +159,31 @@ const ImageTools = () => {
         >
           <div
             {...getRootProps()}
-            className={`glass border-2 border-dashed rounded-3xl p-12 text-center transition-all cursor-pointer h-64 flex flex-col justify-center gap-4 ${isDragActive ? 'border-indigo-500 bg-indigo-50/10' : 'border-slate-300 dark:border-slate-800 hover:border-indigo-400'
+            className={`border-2 border-dashed rounded-3xl p-12 text-center cursor-pointer transition-all duration-300 relative overflow-hidden group ${
+              isDragActive 
+                ? 'border-brand-500 bg-brand-500/10 shadow-[0_0_40px_rgba(99,102,241,0.2)]' 
+                : 'border-slate-300 dark:border-slate-700 hover:border-brand-400 dark:hover:border-brand-500 hover:bg-slate-50 dark:hover:bg-slate-800/50'
               }`}
           >
+            <div className={`absolute inset-0 bg-gradient-to-br from-brand-500/5 to-accent-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${isDragActive ? 'opacity-100' : ''}`} />
             <input {...getInputProps()} />
-            <div className="bg-indigo-100 dark:bg-indigo-900/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-indigo-600 mb-2">
-              <ImageIcon size={32} />
-            </div>
+            {file ? (
+              <div className="relative w-full h-48 rounded-xl overflow-hidden mb-4 border border-slate-200 dark:border-slate-700 bg-black/5 dark:bg-white/5 flex items-center justify-center group">
+                <img src={URL.createObjectURL(file)} alt="Preview" className="w-full h-full object-contain" />
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <p className="text-white font-bold text-sm">Click or drop to replace</p>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-indigo-100 dark:bg-indigo-900/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-indigo-600 mb-2">
+                <ImageIcon size={32} />
+              </div>
+            )}
             <div>
-              <p className="text-lg font-bold dark:text-white">
+              <p className="text-lg font-bold dark:text-white truncate px-4">
                 {file ? file.name : 'Drop image here'}
               </p>
-              <p className="text-sm text-slate-500">JPG, PNG, WEBP, GIF, AVIF supported</p>
+              <p className="text-sm text-slate-500 mt-1">JPG, PNG, WEBP, GIF, AVIF supported</p>
             </div>
           </div>
 
@@ -153,7 +193,7 @@ const ImageTools = () => {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="glass rounded-3xl p-8 space-y-6 bg-white/50 dark:bg-slate-900/50"
+                className="glass-panel p-8 flex flex-col h-full"
               >
                 {mode === 'process' ? (
                   <>
@@ -253,17 +293,25 @@ const ImageTools = () => {
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
               className="glass rounded-[3rem] p-12 text-center bg-white dark:bg-slate-900 shadow-2xl shadow-indigo-500/10 flex-1 flex flex-col items-center justify-center gap-8 border border-slate-100 dark:border-slate-800"
             >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 400, damping: 15 }}
-                className="w-24 h-24 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-full flex items-center justify-center"
-              >
-                <CheckCircle2 size={48} />
-              </motion.div>
-              <div className="text-center">
+              <div className="text-center relative">
+                {/* Result Preview */}
+                <div className="relative w-48 h-48 mx-auto mb-6 rounded-2xl overflow-hidden border-4 border-white dark:border-slate-800 shadow-xl bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none" />
+                  <img 
+                    src={`${SERVER_URL}/api/files/download/${result._id}?token=${localStorage.getItem('token')}`} 
+                    alt="Processed Preview" 
+                    className="w-full h-full object-contain relative z-10" 
+                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                  />
+                  <div className="hidden absolute inset-0 items-center justify-center text-slate-400">
+                    <ImageIcon size={48} className="opacity-20" />
+                  </div>
+                </div>
+
                 <h3 className="text-3xl font-black dark:text-white mb-2 tracking-tight">Success!</h3>
-                <p className="text-slate-500 font-medium">{result.convertedFile?.filename || 'Image processed'}</p>
+                <p className="text-slate-500 font-medium truncate max-w-[250px] mx-auto" title={result.convertedFile?.filename || 'Image processed'}>
+                  {result.convertedFile?.filename || 'Image processed'}
+                </p>
               </div>
 
               {/* ✅ Use DownloadButton instead of direct link */}
@@ -284,8 +332,35 @@ const ImageTools = () => {
 
           {status === 'processing' && (
             <div className="glass rounded-3xl p-10 flex-1 flex flex-col items-center justify-center text-center">
-              <Loader2 className="animate-spin w-12 h-12 text-indigo-500 mb-4" />
-              <p className="text-slate-500">Processing your image...</p>
+              <div className="relative w-24 h-24 mb-6">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                  <circle
+                    className="text-slate-200 dark:text-slate-700 stroke-current"
+                    strokeWidth="8"
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="transparent"
+                  ></circle>
+                  <circle
+                    className="text-brand-500 progress-ring stroke-current"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="transparent"
+                    strokeDasharray="251.2"
+                    strokeDashoffset={251.2 - (251.2 * progress) / 100}
+                    style={{ transition: 'stroke-dashoffset 0.5s ease-in-out' }}
+                  ></circle>
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center text-xl font-black text-brand-600 dark:text-brand-400">
+                  {Math.round(progress)}%
+                </div>
+              </div>
+              <h3 className="text-xl font-bold mb-2 dark:text-white">Processing Image...</h3>
+              <p className="text-slate-500">Please wait while we apply the magic ✨</p>
             </div>
           )}
 
@@ -308,6 +383,7 @@ const ImageTools = () => {
         </motion.div>
       </div>
     </div>
+    </>
   );
 };
 

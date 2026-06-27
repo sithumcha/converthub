@@ -11,9 +11,10 @@ router.post('/merge', protect, checkUsageLimit, upload.array('files', 10), merge
 // Use upload.single for split (one file)
 router.post('/split', protect, checkUsageLimit, upload.single('file'), splitPDF);
 
-const { compressPDF, convertPDFToDocx, protectPDF } = require('../controllers/pdfController');
+const { compressPDF, convertPDFToDocx, protectPDF, imagesToPdf } = require('../controllers/pdfController');
 router.post('/compress', protect, checkUsageLimit, upload.single('file'), compressPDF);
 router.post('/to-docx', protect, checkUsageLimit, upload.single('file'), convertPDFToDocx);
 router.post('/protect', protect, checkUsageLimit, upload.single('file'), protectPDF);
+router.post('/images-to-pdf', protect, checkUsageLimit, upload.array('files', 20), imagesToPdf);
 
 module.exports = router;

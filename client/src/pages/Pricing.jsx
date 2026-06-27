@@ -19,8 +19,10 @@ const Pricing = () => {
     setLoading(true);
     try {
       const res = await paymentService.createCheckoutSession();
-      if (res.data.success) {
-        window.location.href = res.data.data.url;
+      if (res.data.url) {
+        window.location.href = res.data.url;
+      } else {
+        throw new Error('No checkout URL returned');
       }
     } catch (err) {
       console.error('Checkout error:', err);

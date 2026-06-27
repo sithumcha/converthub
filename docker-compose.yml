@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongo:27017/converthub
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your_jwt_secret_change_me
+    depends_on:
+      - mongo
+      - redis
+    volumes:
+      - ./server/uploads:/app/uploads
+      - ./server/converted:/app/converted
+
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  mongo_data:

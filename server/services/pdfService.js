@@ -180,6 +180,44 @@ const pdfService = {
       console.error('Error protecting PDF:', error);
       throw new Error('Failed to protect PDF file');
     }
+  },
+
+  imagesToPdf: async (imagePaths, outputPath) => {
+    try {
+      const pdfDoc = await PDFDocument.create();
+
+      for (const imagePath of imagePaths) {
+        if (!imagePath) continue;
+        const imageBytes = await fs.readFile(imagePath);
+        let image;
+        const ext = path.extname(imagePath).toLowerCase();
+        
+        if (ext === '.jpg' || ext === '.jpeg') {
+          image = await pdfDoc.embedJpg(imageBytes);
+        } else if (ext === '.png') {
+          image = await pdfDoc.embedPng(imageBytes);
+        } else {
+          continue; // Skip unsupported
+        }
+
+        const dims = image.scale(1);
+        const page = pdfDoc.addPage([dims.width, dims.height]);
+        page.drawImage(image, {
+          x: 0,
+          y: 0,
+          width: dims.width,
+          height: dims.height,
+        });
+      }
+
+      const pdfBytes = await pdfDoc.save();
+      await fs.writeFile(outputPath, pdfBytes);
+      
+      return outputPath;
+    } catch (error) {
+      console.error('Error converting images to PDF:', error);
+      throw new Error('Failed to convert images to PDF');
+    }
   }
 };
 

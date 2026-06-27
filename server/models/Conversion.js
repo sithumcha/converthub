@@ -24,6 +24,11 @@ const conversionSchema = new mongoose.Schema({
       'batch-process',
       'file-convert',
       'image-process',
+      'video-to-audio',
+      'video-compress',
+      'images-to-pdf',
+      'pdf-protect',
+      'image-process',
       'ocr',
       'ocr-export',
       'summarize'

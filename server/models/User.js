@@ -19,8 +19,12 @@ const userSchema = new mongoose.Schema({
   },
   password: { 
     type: String, 
-    required: [true, 'Password is required'],
     minlength: [6, 'Password must be at least 6 characters']
+  },
+  googleId: {
+    type: String,
+    sparse: true,
+    unique: true
   },
   createdAt: { type: Date, default: Date.now },
   tier: { type: String, enum: ['free', 'pro'], default: 'free', index: true },
