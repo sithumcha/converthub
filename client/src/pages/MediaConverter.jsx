@@ -137,13 +137,20 @@ const MediaConverter = () => {
   return (
     <>
       <Helmet>
-        <title>Media Converter - ConvertHub</title>
+        <title>Media Studio - ConvertHub</title>
         <meta name="description" content="Convert videos to audio or compress video size efficiently." />
       </Helmet>
       <div className="py-20 px-6 max-w-5xl mx-auto">
         <div className="text-center mb-16">
-          <h1 className="text-5xl md:text-6xl font-black mb-6 text-gradient tracking-tight">Media Converter</h1>
-          <p className="text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">Extract audio from videos or compress video files</p>
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="w-20 h-20 bg-gradient-to-br from-purple-500 to-fuchsia-500 text-white rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-purple-500/30 rotate-3"
+          >
+            <Video size={40} />
+          </motion.div>
+          <h1 className="text-5xl md:text-6xl font-black mb-6 text-gradient tracking-tight">Media Studio</h1>
+          <p className="text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">Extract high-quality audio from videos or compress video files instantly.</p>
         </div>
 
         <div className="flex justify-center gap-3 mb-10">
