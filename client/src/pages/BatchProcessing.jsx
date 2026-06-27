@@ -16,6 +16,8 @@ const API_URL = (() => {
   return url;
 })();
 
+const SERVER_URL = API_URL.replace(/\/api$/, '').replace(/\/api\/$/, '');
+
 const BatchProcessing = () => {
   const [action, setAction] = useState('image-compress');
   const [files, setFiles] = useState([]);

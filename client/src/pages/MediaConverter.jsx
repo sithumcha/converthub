@@ -16,6 +16,8 @@ const API_URL = (() => {
   return url;
 })();
 
+const SERVER_URL = API_URL.replace(/\/api$/, '').replace(/\/api\/$/, '');
+
 const MediaConverter = () => {
   const [mode, setMode] = useState('extract-audio');
   const [file, setFile] = useState(null);

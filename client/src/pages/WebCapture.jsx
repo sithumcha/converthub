@@ -20,6 +20,8 @@ const WebCapture = () => {
   return url;
 })();
 
+  const SERVER_URL = API_URL.replace(/\/api$/, '').replace(/\/api\/$/, '');
+
   const handleCapture = async (e) => {
     e.preventDefault();
     if (!url.trim()) return;
